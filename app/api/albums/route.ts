@@ -152,11 +152,16 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { albumId } = body;
+    const url = new URL(request.url);
+    const albumIdParam = url.searchParams.get('albumId');
 
-    if (!albumId) {
+    if (!albumIdParam) {
       return NextResponse.json({ error: 'Missing albumId for delete' }, { status: 400 });
+    }
+
+    const albumId = Number(albumIdParam);
+    if (isNaN(albumId)) {
+      return NextResponse.json({ error: 'Invalid albumId' }, { status: 400 });
     }
 
     const pool = getPool();
@@ -164,12 +169,8 @@ export async function DELETE(request: NextRequest) {
 
     try {
       await client.query('BEGIN');
-
-      // Delete tracks first to satisfy foreign key constraints
       await client.query(`DELETE FROM tracks WHERE album_id = $1`, [albumId]);
-
       const result = await client.query(`DELETE FROM albums WHERE id = $1`, [albumId]);
-
       await client.query('COMMIT');
 
       if (result.rowCount === 0) {
@@ -186,6 +187,6 @@ export async function DELETE(request: NextRequest) {
     }
   } catch (error) {
     console.error('DELETE /api/albums parse error:', error);
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return NextResponse.json({ error: 'Unexpected error' }, { status: 500 });
   }
 }
