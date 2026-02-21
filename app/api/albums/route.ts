@@ -148,3 +148,44 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 }
+
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { albumId } = body;
+
+    if (!albumId) {
+      return NextResponse.json({ error: 'Missing albumId for delete' }, { status: 400 });
+    }
+
+    const pool = getPool();
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Delete tracks first to satisfy foreign key constraints
+      await client.query(`DELETE FROM tracks WHERE album_id = $1`, [albumId]);
+
+      const result = await client.query(`DELETE FROM albums WHERE id = $1`, [albumId]);
+
+      await client.query('COMMIT');
+
+      if (result.rowCount === 0) {
+        return NextResponse.json({ error: 'Album not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({ message: 'Album deleted successfully' });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('DELETE /api/albums transaction error:', err);
+      return NextResponse.json({ error: 'Error deleting album' }, { status: 500 });
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('DELETE /api/albums parse error:', error);
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+}
