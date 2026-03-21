@@ -1,4 +1,5 @@
 $kind: http-request
+name: getPlaylists
 url: ""
 method: GET
 order: 4503562765506044
