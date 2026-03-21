@@ -1,0 +1,5 @@
+$kind: http-request
+name: deleteAlbum
+url: https://cst391-music-app-rosy.vercel.app/api/albums/#
+method: DELETE
+order: 4498954858418220

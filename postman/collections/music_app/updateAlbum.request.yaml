@@ -1,0 +1,8 @@
+$kind: http-request
+name: updateAlbum
+url: https://cst391-music-app-rosy.vercel.app/api/albums
+method: PUT
+body:
+  type: json
+  content: ""
+order: 4498637161737204

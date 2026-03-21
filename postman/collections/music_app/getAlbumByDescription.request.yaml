@@ -1,0 +1,5 @@
+$kind: http-request
+name: getAlbumByDescription
+url: https://cst391-music-app-rosy.vercel.app/api/albums/search/description/Rev
+method: GET
+order: 4464128784087277

@@ -45,3 +45,32 @@ CREATE INDEX IF NOT EXISTS "album_id_FK_idx" ON "tracks" ("album_id");
 -- Reset sequences to match inserted IDs (safe if inserts used explicit IDs)
 SELECT setval('albums_id_seq', (SELECT COALESCE(MAX(id),1) FROM "albums"));
 SELECT setval('tracks_id_seq', (SELECT COALESCE(MAX(id),1) FROM "tracks"));
+
+-- Playlists and join table for albums
+DROP TABLE IF EXISTS "playlist_albums";
+DROP TABLE IF EXISTS "playlists";
+
+CREATE TABLE IF NOT EXISTS "playlists" (
+  "id" SERIAL,
+  "title" varchar(200) NOT NULL,
+  "description" varchar(500) DEFAULT NULL,
+  "created_at" timestamptz DEFAULT NOW(),
+  PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "playlist_albums" (
+  "id" SERIAL,
+  "playlist_id" integer NOT NULL,
+  "album_id" integer NOT NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT playlist_fk FOREIGN KEY ("playlist_id") REFERENCES "playlists" ("id") ON DELETE CASCADE,
+  CONSTRAINT album_fk FOREIGN KEY ("album_id") REFERENCES "albums" ("id") ON DELETE CASCADE,
+  CONSTRAINT unique_playlist_album UNIQUE ("playlist_id", "album_id")
+);
+
+CREATE INDEX IF NOT EXISTS "playlist_id_idx" ON "playlist_albums" ("playlist_id");
+CREATE INDEX IF NOT EXISTS "album_id_idx" ON "playlist_albums" ("album_id");
+
+-- Reset sequences for playlists tables
+SELECT setval('playlists_id_seq', (SELECT COALESCE(MAX(id),1) FROM "playlists"));
+SELECT setval('playlist_albums_id_seq', (SELECT COALESCE(MAX(id),1) FROM "playlist_albums"));

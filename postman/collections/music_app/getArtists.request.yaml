@@ -1,0 +1,5 @@
+$kind: http-request
+name: getArtists
+url: https://cst391-music-app-rosy.vercel.app/api/artists
+method: GET
+order: 4471251732027040

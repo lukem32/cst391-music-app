@@ -1,0 +1,5 @@
+$kind: http-request
+name: getAlbumByArtist
+url: https://cst391-music-app-rosy.vercel.app/api/albums/search/artist/beat
+method: GET
+order: 4248400523413265

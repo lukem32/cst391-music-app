@@ -15,3 +15,14 @@ export interface Album {
   description?: string | null;
   tracks?: Track[];
 }
+
+export interface Playlist {
+  id: number;
+  title: string;
+  description?: string | null;
+  created_at?: string;
+}
+
+export interface PlaylistWithAlbums extends Playlist {
+  albums?: Album[];
+}

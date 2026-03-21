@@ -1,0 +1,5 @@
+$kind: http-request
+name: getAlbums
+url: https://cst391-music-app-rosy.vercel.app/api/albums
+method: GET
+order: 4055813356792858

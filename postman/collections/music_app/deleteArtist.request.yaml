@@ -1,0 +1,5 @@
+$kind: http-request
+name: deleteArtist
+url: https://cst391-music-app-rosy.vercel.app/api/artists/#
+method: DELETE
+order: 4503508776375734

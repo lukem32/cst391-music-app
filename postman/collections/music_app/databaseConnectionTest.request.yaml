@@ -1,0 +1,5 @@
+$kind: http-request
+name: databaseConnectionTest
+url: https://cst391-music-app-rosy.vercel.app/api/db-check
+method: GET
+order: 1774118346544

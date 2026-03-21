@@ -1,0 +1,8 @@
+$kind: http-request
+name: addArtist
+url: https://cst391-music-app-rosy.vercel.app/api/artists
+method: POST
+body:
+  type: json
+  content: ""
+order: 4499099001745415
