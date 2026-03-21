@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
       `SELECT p.id, p.title, p.description, p.created_at, COUNT(pa.album_id) AS album_count
        FROM playlists p
        LEFT JOIN playlist_albums pa ON pa.playlist_id = p.id
-       GROUP BY p.id ORDER BY p.created_at DESC`
+       GROUP BY p.id, p.title, p.description, p.created_at
+       ORDER BY p.created_at DESC`
     );
     const rows = res.rows.map((r: any) => ({
       id: r.id,
@@ -24,7 +25,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(rows);
   } catch (error) {
     console.error('GET /api/playlists error:', error);
-    return NextResponse.json({ error: 'Failed to fetch playlists' }, { status: 500 });
+    const details = process.env.NODE_ENV === 'production' ? undefined : (error instanceof Error ? error.message : String(error));
+    return NextResponse.json({ error: 'Failed to fetch playlists', details }, { status: 500 });
   }
 }
 
