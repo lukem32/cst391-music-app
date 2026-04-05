@@ -1,65 +1,96 @@
-import Image from "next/image";
+// app/page.tsx
+// CHANGED: Next.js uses TypeScript and server/client separation.
+// This component uses hooks and interactivity, so we must mark it as a Client Component.
 
-export default function Home() {
+"use client";
+
+import { useState, useEffect } from "react";
+import NavBar from "./components/NavBar";
+import SearchAlbum from "./components/SearchAlbum";
+import { useRouter } from "next/navigation"; // CHANGED: replace BrowserRouter + navigate() with Next.js router
+import { get } from "@/lib/apiClient";
+import { Album } from "@/lib/types";
+
+// CHANGED: In Next.js, "App" is replaced by a route-level component called page.tsx
+export default function Page() {
+  const [searchPhrase, setSearchPhrase] = useState("");
+  const [albumList, setAlbumList] = useState<Album[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter(); // CHANGED: replaces BrowserRouter + navigate()
+
+  // CHANGED: Load albums from API using the centralized apiClient
+  const loadAlbums = async () => {
+    try {
+      // CHANGED: since the server and client are in the same Next.js app, we use relative paths
+      const data = await get<Album[]>("/albums");
+      console.log("Fetched albums:", data);
+      setAlbumList(data);
+      setError(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load albums";
+      console.error("Error loading albums:", message);
+      setError(message);
+    }
+  };
+
+  // CHANGED: Initialization logic still valid
+  useEffect(() => {
+    loadAlbums();
+  }, []);
+
+  const updateSearchResults = (phrase: string) => {
+    console.log("phrase is " + phrase);
+    setSearchPhrase(phrase);
+  };
+
+  // CHANGED: replace navigate() with router.push()
+  const updateSingleAlbum = (albumId: number, uri: string) => {
+    console.log("Update Single Album = ", albumId);
+    const path = `${uri}${albumId}`;
+    console.log("path", path);
+    router.push(path); // CHANGED: use Next.js router
+  };
+
+  const renderedList = albumList.filter((album) => {
+    if (
+      (album.description ?? "")
+        .toLowerCase()
+        .includes(searchPhrase.toLowerCase()) ||
+      searchPhrase === ""
+    ) {
+      return true;
+    }
+    return false;
+  });
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            This is Luke Morton's Music App, it is deployed on Vercel!
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <NavBar />
+      <main className="container mt-4">
+        <h1 className="mb-1">Luke Morton&apos;s Music App</h1>
+        <p className="text-muted mb-4">Browse and manage your album collection.</p>
+
+        {/* Error display — shown instead of the album list when an error occurs */}
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            <strong>Error loading albums:</strong> {error}
+          </div>
+        )}
+
+        {/* Album list + search — shown only when albums have loaded successfully */}
+        {!error && (
+          <SearchAlbum
+            albumList={renderedList}
+            updateSearchResults={updateSearchResults}
+            updateSingleAlbum={(albumId) => updateSingleAlbum(albumId, "/edit/")}
+          />
+        )}
+
+        {/* Loading state */}
+        {!error && albumList.length === 0 && <p>Loading albums...</p>}
       </main>
-    </div>
+    </>
   );
 }

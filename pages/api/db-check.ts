@@ -2,7 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getPool } from '@/lib/db';
 
 const environment = process.env.NODE_ENV;
-const dbUrl = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+const dbUrl =
+  process.env.DATABASE_URL_NEON ??
+  process.env.POSTGRES_URL ??
+  process.env.DATABASE_URL;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
