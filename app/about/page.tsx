@@ -38,10 +38,9 @@ export default function AboutPage() {
                   🎵
                 </div>
                 <h3 className="card-title fw-bold">Luke Morton</h3>
-                <p className="text-muted fst-italic mb-3">Boss &amp; Lead Developer</p>
+                <p className="text-muted fst-italic mb-3">Software Developer</p>
                 <p className="card-text">
-                  Welcome to Luke Morton&apos;s Music App — a full-stack Next.js
-                  application that lets you browse, search, create, and edit
+                  Welcome to Luke Morton&apos;s Music App — Browse, search, create, and edit
                   your personal music album collection.
                 </p>
                 <hr />
@@ -54,7 +53,7 @@ export default function AboutPage() {
                 </Link>
               </div>
               <div className="card-footer text-center text-muted small py-2">
-                CST-391 Activity 5 &mdash; React to Next.js Migration
+                CST-391 &mdash; React App
               </div>
             </div>
           </div>
