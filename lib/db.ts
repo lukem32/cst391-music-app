@@ -5,7 +5,7 @@ let pool: Pool | undefined;
 
 export function getPool(): Pool {
   if (!pool) {
-    const URL = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+    const URL = process.env.DATABASE_URL_NEON ?? process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
     if (!URL) throw new Error('POSTGRES_URL (or DATABASE_URL) not set');
 
     pool = new Pool({
