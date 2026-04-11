@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./globals.css";
+import SessionWrapper from "./SessionWrapper";
 
 export const metadata: Metadata = {
-  title: "Luke Morton's Music App",
+  title: "Music App",
   description: "CST-391 Music App ported to Next.js",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -14,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <SessionWrapper>{children}</SessionWrapper>
+      </body>
     </html>
   );
 }
