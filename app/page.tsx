@@ -1,95 +1,147 @@
-// app/page.tsx
-// CHANGED: Next.js uses TypeScript and server/client separation.
-// This component uses hooks and interactivity, so we must mark it as a Client Component.
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import NavBar from "./components/NavBar";
-import SearchAlbum from "./components/SearchAlbum";
-import { useRouter } from "next/navigation"; // CHANGED: replace BrowserRouter + navigate() with Next.js router
+import AlbumList from "./components/AlbumList";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { get } from "@/lib/apiClient";
 import { Album } from "@/lib/types";
 
-// CHANGED: In Next.js, "App" is replaced by a route-level component called page.tsx
 export default function Page() {
   const [searchPhrase, setSearchPhrase] = useState("");
   const [albumList, setAlbumList] = useState<Album[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [favoritedIds, setFavoritedIds] = useState<Set<number>>(new Set());
 
-  const router = useRouter(); // CHANGED: replaces BrowserRouter + navigate()
+  const router = useRouter();
+  const { data: session } = useSession();
 
-  // CHANGED: Load albums from API using the centralized apiClient
-  const loadAlbums = async () => {
+  const loadAlbums = useCallback(async () => {
     try {
-      // CHANGED: since the server and client are in the same Next.js app, we use relative paths
       const data = await get<Album[]>("/albums");
-      console.log("Fetched albums:", data);
       setAlbumList(data);
       setError(null);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load albums";
-      console.error("Error loading albums:", message);
-      setError(message);
+      setError(err instanceof Error ? err.message : "Failed to load albums");
     }
-  };
-
-  // CHANGED: Initialization logic still valid
-  useEffect(() => {
-    loadAlbums();
   }, []);
 
-  const updateSearchResults = (phrase: string) => {
-    console.log("phrase is " + phrase);
-    setSearchPhrase(phrase);
+  const loadFavoriteIds = useCallback(async () => {
+    if (!session?.user?.email) return;
+    try {
+      const res = await fetch("/api/favorites");
+      if (!res.ok) return;
+      const data = await res.json();
+      setFavoritedIds(new Set<number>(data.ids ?? []));
+    } catch { /* non-critical */ }
+  }, [session?.user?.email]);
+
+  useEffect(() => { loadAlbums(); }, [loadAlbums]);
+  useEffect(() => { loadFavoriteIds(); }, [loadFavoriteIds]);
+
+  const handleFavoriteToggle = (albumId: number, newState: boolean) => {
+    setFavoritedIds((prev) => {
+      const next = new Set(prev);
+      if (newState) next.add(albumId);
+      else next.delete(albumId);
+      return next;
+    });
   };
 
-  // CHANGED: replace navigate() with router.push()
-  const updateSingleAlbum = (albumId: number, uri: string) => {
-    console.log("Update Single Album = ", albumId);
-    const path = `${uri}${albumId}`;
-    console.log("path", path);
-    router.push(path); // CHANGED: use Next.js router
-  };
-
-  const renderedList = albumList.filter((album) => {
-    if (
-      (album.description ?? "")
-        .toLowerCase()
-        .includes(searchPhrase.toLowerCase()) ||
-      searchPhrase === ""
-    ) {
-      return true;
-    }
-    return false;
-  });
+  const renderedList = albumList.filter((album) =>
+    (album.description ?? "").toLowerCase().includes(searchPhrase.toLowerCase()) ||
+    album.title.toLowerCase().includes(searchPhrase.toLowerCase()) ||
+    album.artist.toLowerCase().includes(searchPhrase.toLowerCase()) ||
+    searchPhrase === ""
+  );
 
   return (
     <>
       <NavBar />
-      <main className="container mt-4">
-        <h1 className="mb-1">Luke Morton&apos;s Music App</h1>
-        <p className="text-muted mb-4">Browse and manage your album collection.</p>
 
-        {/* Error display — shown instead of the album list when an error occurs */}
+      {/* ── Page header ──────────────────────────── */}
+      <div
+        style={{
+          background: "linear-gradient(135deg, #0d1f3c 0%, #163055 60%, #1e4480 100%)",
+          borderBottom: "3px solid #f5c518",
+          padding: "2.2rem 0 1.6rem",
+          marginBottom: "2rem",
+        }}
+      >
+        <div className="container">
+          <h1 style={{ color: "#fff", marginBottom: ".25rem", fontSize: "1.9rem" }}>
+            Luke Morton&apos;s Music App
+          </h1>
+          <p style={{ color: "rgba(255,255,255,.65)", margin: 0, fontSize: ".92rem" }}>
+            {albumList.length > 0
+              ? `${albumList.length} albums in your collection`
+              : "Browse and manage your album collection."}
+          </p>
+        </div>
+      </div>
+
+      <main className="container" style={{ paddingBottom: "3rem" }}>
         {error && (
-          <div className="alert alert-danger" role="alert">
+          <div className="alert alert-danger mb-4" role="alert">
             <strong>Error loading albums:</strong> {error}
           </div>
         )}
 
-        {/* Album list + search — shown only when albums have loaded successfully */}
+        {/* ── Search bar ──────────────────────────── */}
         {!error && (
-          <SearchAlbum
-            albumList={renderedList}
-            updateSearchResults={updateSearchResults}
-            updateSingleAlbum={(albumId) => updateSingleAlbum(albumId, "/edit/")}
-          />
+          <div className="mb-4" style={{ maxWidth: 520 }}>
+            <div style={{ position: "relative" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "1rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#94a3b8",
+                  fontSize: "1rem",
+                  pointerEvents: "none",
+                  zIndex: 1,
+                }}
+              >
+                🔍
+              </span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search by title, artist, or description…"
+                style={{ paddingLeft: "2.5rem", height: 44 }}
+                onChange={(e) => setSearchPhrase(e.target.value)}
+              />
+            </div>
+            {searchPhrase && (
+              <p style={{ fontSize: ".8rem", color: "#5a6a82", marginTop: ".4rem" }}>
+                {renderedList.length} result{renderedList.length !== 1 ? "s" : ""} for &ldquo;{searchPhrase}&rdquo;
+              </p>
+            )}
+          </div>
         )}
 
-        {/* Loading state */}
-        {!error && albumList.length === 0 && <p>Loading albums...</p>}
+        {/* ── Album grid ──────────────────────────── */}
+        {!error && albumList.length === 0 && (
+          <div style={{ textAlign: "center", padding: "3rem 0", color: "#5a6a82" }}>
+            <div style={{ fontSize: "3rem", marginBottom: ".5rem" }}>♫</div>
+            <p>Loading albums…</p>
+          </div>
+        )}
+
+        {!error && albumList.length > 0 && renderedList.length === 0 && (
+          <p style={{ color: "#5a6a82" }}>No albums match your search.</p>
+        )}
+
+        {!error && renderedList.length > 0 && (
+          <AlbumList
+            albumList={renderedList}
+            updateSingleAlbum={(id) => router.push(`/edit/${id}`)}
+            favoritedIds={favoritedIds}
+            onFavoriteToggle={handleFavoriteToggle}
+          />
+        )}
       </main>
     </>
   );

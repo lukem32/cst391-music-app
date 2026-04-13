@@ -1,3 +1,7 @@
+-- ============================================================
+-- CST-391 Music App  –  Full schema (run once to reset)
+-- ============================================================
+
 -- Albums table
 DROP TABLE IF EXISTS "albums" CASCADE;
 CREATE TABLE "albums" (
@@ -11,7 +15,7 @@ CREATE TABLE "albums" (
 );
 
 -- Insert albums
-INSERT INTO "albums" VALUES 
+INSERT INTO "albums" VALUES
     (1,'Revolver','The Beatles',1966,'https://m.media-amazon.com/images/I/91ffeWzPNpL._SL1500_.jpg','Revolver is the seventh studio albums by the English rock band the Beatles.'),
     (3,'Rubber Soul','The Beatles',1965,'https://m.media-amazon.com/images/I/81EF5zXRFdL._SL1500_.jpg','Rubber Soul is the sixth studio albums by the English rock band the Beatles.'),
     (4,'Please Please Me','The Beatles',1963,'https://m.media-amazon.com/images/I/61LdKbic+wL.jpg','Please Please Me is the debut studio albums by the English rock band the Beatles.'),
@@ -45,7 +49,9 @@ CREATE INDEX IF NOT EXISTS "album_id_FK_idx" ON "tracks" ("album_id");
 SELECT setval('albums_id_seq', (SELECT COALESCE(MAX(id),1) FROM "albums"));
 SELECT setval('tracks_id_seq', (SELECT COALESCE(MAX(id),1) FROM "tracks"));
 
--- Playlists and join table
+-- ============================================================
+-- Playlists
+-- ============================================================
 DROP TABLE IF EXISTS "playlist_albums";
 DROP TABLE IF EXISTS "playlists";
 
@@ -53,6 +59,7 @@ CREATE TABLE IF NOT EXISTS "playlists" (
   "id" SERIAL,
   "title" varchar(200) NOT NULL,
   "description" varchar(500) DEFAULT NULL,
+  "user_email" varchar(255) DEFAULT NULL,   -- NULL = legacy / seed data
   "created_at" timestamptz DEFAULT NOW(),
   PRIMARY KEY ("id")
 );
@@ -72,14 +79,41 @@ CREATE INDEX IF NOT EXISTS "album_id_idx" ON "playlist_albums" ("album_id");
 SELECT setval('playlists_id_seq', (SELECT COALESCE(MAX(id),1) FROM "playlists"));
 SELECT setval('playlist_albums_id_seq', (SELECT COALESCE(MAX(id),1) FROM "playlist_albums"));
 
--- ✅ Sample playlists
-INSERT INTO playlists (title, description) VALUES 
+-- Sample playlists (no user_email = shared/seed data)
+INSERT INTO playlists (title, description) VALUES
   ('Best of The Beatles', 'Top hits from The Beatles'),
   ('Classic Albums', 'Essential Beatles albums to listen to'),
   ('Chill Beatles', 'Relaxing Beatles music');
 
 -- Associate albums to playlists
 INSERT INTO playlist_albums (playlist_id, album_id) VALUES
-  (1,1), (1,3), (1,4), (1,5), (1,6),    -- Best of The Beatles
-  (2,7), (2,8), (2,9), (2,10), (2,11), -- Classic Albums
-  (3,12), (3,13);                       -- Chill Beatles
+  (1,1), (1,3), (1,4), (1,5), (1,6),
+  (2,7), (2,8), (2,9), (2,10), (2,11),
+  (3,12), (3,13);
+
+-- ============================================================
+-- Favorites  (Milestone 2 / 5 new feature)
+-- ============================================================
+DROP TABLE IF EXISTS "favorites";
+
+CREATE TABLE "favorites" (
+  "id" SERIAL,
+  "user_email" varchar(255) NOT NULL,
+  "album_id" integer NOT NULL,
+  "created_at" timestamptz DEFAULT NOW(),
+  PRIMARY KEY ("id"),
+  CONSTRAINT fav_album_fk FOREIGN KEY ("album_id")
+    REFERENCES "albums" ("id") ON DELETE CASCADE,
+  -- A user can only favorite a given album once
+  CONSTRAINT unique_user_album_fav UNIQUE ("user_email", "album_id")
+);
+
+CREATE INDEX IF NOT EXISTS "fav_user_idx" ON "favorites" ("user_email");
+CREATE INDEX IF NOT EXISTS "fav_album_idx" ON "favorites" ("album_id");
+SELECT setval('favorites_id_seq', (SELECT COALESCE(MAX(id),1) FROM "favorites"));
+
+-- ============================================================
+-- Migration: add user_email column to existing playlists table
+-- (run only if applying to an already-existing database)
+-- ============================================================
+-- ALTER TABLE playlists ADD COLUMN IF NOT EXISTS "user_email" varchar(255) DEFAULT NULL;

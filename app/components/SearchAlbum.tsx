@@ -11,12 +11,16 @@ interface SearchAlbumProps {
   albumList: Album[];
   updateSearchResults: (phrase: string) => void;
   updateSingleAlbum: (albumId: number, uri: string) => void;
+  favoritedIds?: Set<number>;
+  onFavoriteToggle?: (albumId: number, newState: boolean) => void;
 }
 
 export default function SearchAlbum({
   albumList,
   updateSearchResults,
   updateSingleAlbum,
+  favoritedIds = new Set(),
+  onFavoriteToggle,
 }: SearchAlbumProps) {
   return (
     <div>
@@ -28,7 +32,12 @@ export default function SearchAlbum({
           onChange={(e) => updateSearchResults(e.target.value)}
         />
       </div>
-      <AlbumList albumList={albumList} updateSingleAlbum={updateSingleAlbum} />
+      <AlbumList
+        albumList={albumList}
+        updateSingleAlbum={updateSingleAlbum}
+        favoritedIds={favoritedIds}
+        onFavoriteToggle={onFavoriteToggle}
+      />
     </div>
   );
 }

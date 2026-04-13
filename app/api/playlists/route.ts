@@ -1,79 +1,114 @@
+// app/api/playlists/route.ts
+// Thin HTTP controller for playlists.
+// RBAC: GET is public; POST requires login (users create playlists);
+//       PUT/DELETE require ownership OR admin role.
+
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getPool } from '@/lib/db';
-import { Playlist } from '@/lib/types';
+import { PlaylistRepository } from '@/lib/repositories/playlistRepository';
+import { PlaylistService } from '@/lib/services/playlistService';
 
 export const runtime = 'nodejs';
 
-export async function GET(request: NextRequest) {
+function makeService(): PlaylistService {
+  return new PlaylistService(new PlaylistRepository(getPool()));
+}
+
+// ── GET /api/playlists ──────────────────────────────────────────────────────
+export async function GET() {
   try {
-    const pool = getPool();
-    // Return playlists with album counts
-    const res = await pool.query(
-      `SELECT p.id, p.title, p.description, p.created_at, COUNT(pa.album_id) AS album_count
-       FROM playlists p
-       LEFT JOIN playlist_albums pa ON pa.playlist_id = p.id
-       GROUP BY p.id, p.title, p.description, p.created_at
-       ORDER BY p.created_at DESC`
-    );
-    const rows = res.rows.map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      created_at: r.created_at,
-      album_count: Number(r.album_count || 0),
-    }));
-    return NextResponse.json(rows);
-  } catch (error) {
-    console.error('GET /api/playlists error:', error);
-    const details = process.env.NODE_ENV === 'production' ? undefined : (error instanceof Error ? error.message : String(error));
-    return NextResponse.json({ error: 'Failed to fetch playlists', details }, { status: 500 });
+    const svc = makeService();
+    const playlists = await svc.getAllPlaylists();
+    return NextResponse.json(playlists);
+  } catch (err) {
+    console.error('GET /api/playlists error:', err);
+    return NextResponse.json({ error: 'Failed to fetch playlists' }, { status: 500 });
   }
 }
 
+// ── POST /api/playlists  (logged-in users) ──────────────────────────────────
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { title, description } = body;
-    if (!title) return NextResponse.json({ error: 'Missing title' }, { status: 400 });
-    const pool = getPool();
-    const res = await pool.query(
-      `INSERT INTO playlists (title, description) VALUES ($1, $2) RETURNING id`,
-      [title, description ?? null]
-    );
-    return NextResponse.json({ id: res.rows[0].id }, { status: 201 });
-  } catch (error) {
-    console.error('POST /api/playlists error:', error);
-    return NextResponse.json({ error: 'Failed to create playlist' }, { status: 500 });
+    const svc = makeService();
+    const id = await svc.createPlaylist(title, description, session.user.email);
+    return NextResponse.json({ id }, { status: 201 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Failed to create playlist';
+    console.error('POST /api/playlists error:', err);
+    return NextResponse.json({ error: msg }, { status: msg.includes('required') ? 400 : 500 });
   }
 }
 
+// ── PUT /api/playlists  (admin or playlist owner) ───────────────────────────
 export async function PUT(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { playlistId, title, description } = body;
     if (!playlistId) return NextResponse.json({ error: 'Missing playlistId' }, { status: 400 });
-    const pool = getPool();
-    await pool.query(`UPDATE playlists SET title=$1, description=$2 WHERE id=$3`, [title, description ?? null, playlistId]);
+
+    // Check ownership unless admin
+    if (session.user.role !== 'admin') {
+      const svc = makeService();
+      const existing = await svc.getPlaylistById(Number(playlistId));
+      if (!existing) return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
+      if (existing.user_email !== session.user.email) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    const svc = makeService();
+    await svc.updatePlaylist(Number(playlistId), title, description);
     return NextResponse.json({ message: 'Playlist updated' });
-  } catch (error) {
-    console.error('PUT /api/playlists error:', error);
+  } catch (err) {
+    console.error('PUT /api/playlists error:', err);
     return NextResponse.json({ error: 'Failed to update playlist' }, { status: 500 });
   }
 }
 
+// ── DELETE /api/playlists  (admin or playlist owner) ────────────────────────
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const url = new URL(request.url);
-    const playlistIdParam = url.searchParams.get('playlistId');
-    if (!playlistIdParam) return NextResponse.json({ error: 'Missing playlistId' }, { status: 400 });
-    const id = Number(playlistIdParam);
-    if (isNaN(id)) return NextResponse.json({ error: 'Invalid playlistId' }, { status: 400 });
-    const pool = getPool();
-    const res = await pool.query(`DELETE FROM playlists WHERE id=$1 RETURNING id`, [id]);
-    if (res.rowCount === 0) return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
+    const playlistId = Number(url.searchParams.get('playlistId'));
+    if (!playlistId || isNaN(playlistId)) {
+      return NextResponse.json({ error: 'Missing or invalid playlistId' }, { status: 400 });
+    }
+
+    const svc = makeService();
+
+    // Check ownership unless admin
+    if (session.user.role !== 'admin') {
+      const existing = await svc.getPlaylistById(playlistId);
+      if (!existing) return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
+      if (existing.user_email !== session.user.email) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    const deleted = await svc.deletePlaylist(playlistId);
+    if (!deleted) return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
     return NextResponse.json({ message: 'Playlist deleted' });
-  } catch (error) {
-    console.error('DELETE /api/playlists error:', error);
+  } catch (err) {
+    console.error('DELETE /api/playlists error:', err);
     return NextResponse.json({ error: 'Failed to delete playlist' }, { status: 500 });
   }
 }
