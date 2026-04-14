@@ -16,6 +16,7 @@
   --gold-light:  #fef9c3;
   --white:       #ffffff;
   --off-white:   #f4f7fc;
+  --bg-blue:     #cfe0f5;
   --text-dark:   #0d1f3c;
   --text-muted:  #5a6a82;
   --border:      #c8d6e5;
@@ -31,7 +32,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--off-white);
+  background: var(--bg-blue);
   color: var(--text-dark);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 15px;

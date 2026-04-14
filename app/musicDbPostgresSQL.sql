@@ -16,16 +16,16 @@ CREATE TABLE "albums" (
 
 -- Insert albums
 INSERT INTO "albums" VALUES
-    (1,'Revolver','The Beatles',1966,'https://m.media-amazon.com/images/I/91ffeWzPNpL._SL1500_.jpg','Revolver is the seventh studio albums by the English rock band the Beatles.'),
-    (3,'Rubber Soul','The Beatles',1965,'https://m.media-amazon.com/images/I/81EF5zXRFdL._SL1500_.jpg','Rubber Soul is the sixth studio albums by the English rock band the Beatles.'),
-    (4,'Please Please Me','The Beatles',1963,'https://m.media-amazon.com/images/I/61LdKbic+wL.jpg','Please Please Me is the debut studio albums by the English rock band the Beatles.'),
+    (1,'Revolver','The Beatles',1966,'https://upload.wikimedia.org/wikipedia/en/0/04/Revolver.jpg','Revolver is the seventh studio albums by the English rock band the Beatles.'),
+    (3,'Rubber Soul','The Beatles',1965,'https://upload.wikimedia.org/wikipedia/en/c/ce/Rubber_Soul.jpg','Rubber Soul is the sixth studio albums by the English rock band the Beatles.'),
+    (4,'Please Please Me','The Beatles',1963,'https://upload.wikimedia.org/wikipedia/en/b/b9/PleasePleaseMe.jpg','Please Please Me is the debut studio albums by the English rock band the Beatles.'),
     (5,'With the Beatles','The Beatles',1963,'https://upload.wikimedia.org/wikipedia/en/0/0a/Withthebeatlescover.jpg','With the Beatles is the second studio albums by the English rock band the Beatles.'),
     (6,'A Hard Day''s Night','The Beatles',1964,'https://upload.wikimedia.org/wikipedia/en/e/e6/HardDayUK.jpg','A Hard Day''s Night is the third studio albums by the English rock band the Beatles.'),
-    (7,'Help!','The Beatles',1965,'https://upload.wikimedia.org/wikipedia/en/thumb/e/e7/Help%21_%28The_Beatles_album_-_cover_art%29.jpg/220px-Help%21_%28The_Beatles_album_-_cover_art%29.jpg','Help! is the fifth studio albums by English rock band the Beatles.'),
+    (7,'Help!','The Beatles',1965,'https://upload.wikimedia.org/wikipedia/en/e/e7/Help%21_%28The_Beatles_album_-_cover_art%29.jpg','Help! is the fifth studio albums by English rock band the Beatles.'),
     (8,'Sgt. Pepper''s Lonely Hearts Club Band','The Beatles',1967,'https://upload.wikimedia.org/wikipedia/en/5/50/Sgt._Pepper%27s_Lonely_Hearts_Club_Band.jpg','Sgt. Pepper''s Lonely Hearts Club Band is the eighth studio albums by the English rock band the Beatles.'),
     (9,'Magical Mystery Tour','The Beatles',1967,'https://upload.wikimedia.org/wikipedia/en/e/e8/MagicalMysteryTourDoubleEPcover.jpg','Magical Mystery Tour is an albums by the English rock band the Beatles.'),
     (10,'The Beatles (White albums)','The Beatles',1968,'https://upload.wikimedia.org/wikipedia/commons/2/20/TheBeatles68LP.jpg','The Beatles, also known as "The White albums", is the ninth studio albums by the English rock band the Beatles.'),
-    (11,'Yellow Submarine','The Beatles',1969,'https://upload.wikimedia.org/wikipedia/en/thumb/a/ac/TheBeatles-YellowSubmarinealbumcover.jpg/220px-TheBeatles-YellowSubmarinealbumcover.jpg','Yellow Submarine is the tenth studio albums by English rock band the Beatles.'),
+    (11,'Yellow Submarine','The Beatles',1969,'https://upload.wikimedia.org/wikipedia/en/a/ac/TheBeatles-YellowSubmarinealbumcover.jpg','Yellow Submarine is the tenth studio albums by English rock band the Beatles.'),
     (12,'Abbey Road','The Beatles',1969,'https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg','Abbey Road is the eleventh studio albums by English rock band the Beatles.'),
     (13,'Let It Be','The Beatles',1970,'https://upload.wikimedia.org/wikipedia/en/2/25/LetItBe.jpg','Let It Be is the twelfth and final studio albums by the English rock band the Beatles.');
 

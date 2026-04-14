@@ -3,6 +3,7 @@
 import { Album } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useState } from "react";
 import FavoriteButton from "./FavoriteButton";
 
 interface AlbumCardProps {
@@ -20,10 +21,13 @@ export default function AlbumCard({
 }: AlbumCardProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const [imgError, setImgError] = useState(false);
 
   const isLoggedIn = !!session;
   const isAdmin = session?.user?.role === "admin";
   const isFavorited = favoritedIds.has(album.id);
+
+  const showImage = album.image && !imgError;
 
   return (
     <div
@@ -31,16 +35,17 @@ export default function AlbumCard({
       style={{ borderTop: "3px solid #3b82f6", borderRadius: 12 }}
     >
       {/* Album artwork */}
-      {album.image ? (
+      {showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={album.image}
+          src={album.image!}
           className="card-img-top"
           alt={album.title}
           style={{ objectFit: "cover", height: 190 }}
+          onError={() => setImgError(true)}
         />
       ) : (
-        /* Placeholder when no image */
+        /* Placeholder when no image or image fails to load */
         <div
           style={{
             height: 190,
