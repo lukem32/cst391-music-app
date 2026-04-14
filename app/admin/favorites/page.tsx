@@ -49,7 +49,7 @@ export default function AdminFavoritesPage() {
   }, [session, status, router]);
 
   // Loading / redirect
-  if (status === 'loading' || (!session && status !== 'loading')) {
+  if (status === 'loading' || !session) {
     return (
       <>
         <NavBar />
